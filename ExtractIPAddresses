@@ -1,0 +1,68 @@
+Sub ExtractIPAddresses()
+    Dim wsSource As Worksheet
+    Dim wsDest As Worksheet
+    Dim lastRow As Long
+    Dim i As Long, j As Long
+    Dim cellValue As String
+    Dim ipArray() As String
+    Dim ipAddress As Variant
+    Dim destRow As Long
+    Dim regex As Object
+    
+    ' Initialize
+    Set wsSource = ThisWorkbook.Sheets(1) ' Assuming the source sheet is the first sheet
+    Set wsDest = ThisWorkbook.Sheets.Add ' Create a new sheet for the IP addresses
+    wsDest.Name = "Extracted IPs" ' Rename the new sheet
+    destRow = 1
+    
+    ' Create a regex object for matching IP addresses
+    Set regex = CreateObject("VBScript.RegExp")
+    With regex
+        .Global = True
+        .IgnoreCase = False
+        .Pattern = "\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b" ' Pattern for matching IPv4 addresses
+    End With
+    
+    ' Find the last row with data in the source sheet
+    lastRow = wsSource.Cells(wsSource.Rows.Count, "O").End(xlUp).Row
+
+    ' Loop through each row in the source sheet
+    For i = 1 To lastRow
+        ' Loop through columns O and K
+        For j = 11 To 15 Step 4
+            cellValue = wsSource.Cells(i, j).Value
+            
+            ' Split the cell value by semicolon
+            ipArray = Split(cellValue, ";")
+            
+            ' Loop through each item in the array
+            For Each ipAddress In ipArray
+                If regex.Test(ipAddress) Then
+                    wsDest.Cells(destRow, 1).Value = Trim(ipAddress) ' Copy the IP address to the new sheet
+                    destRow = destRow + 1
+                End If
+            Next ipAddress
+        Next j
+    Next i
+
+    ' Autofit the column in the new sheet
+    wsDest.Columns("A:A").AutoFit
+    
+    MsgBox "IP addresses have been extracted to the sheet 'Extracted IPs'.", vbInformation
+End Sub
+
+
+
+
+How to Use the Macro:
+Press ALT + F11 to open the VBA editor in Excel.
+Go to Insert > Module to create a new module.
+Copy and paste the above VBA code into the module.
+Close the VBA editor.
+Run the macro by pressing ALT + F8, selecting ExtractIPAddresses, and clicking Run.
+Explanation:
+The macro scans through all rows in the source sheet, specifically in columns O and K.
+It looks for IPv4 addresses in these columns using a regular expression.
+If it finds any, it copies them to a new sheet named "Extracted IPs".
+The IP addresses in each cell are split by semicolons (;), allowing the macro to handle multiple addresses per cell.
+This code will create a new sheet where all extracted IP addresses are listed.
