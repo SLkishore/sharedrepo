@@ -1,0 +1,70 @@
+Sub ReplaceIPWithHostname()
+    Dim wsFirewall As Worksheet
+    Dim wsMapping As Worksheet
+    Dim lastRowFirewall As Long
+    Dim lastRowMapping As Long
+    Dim i As Long, j As Long
+    Dim cellValue As String
+    Dim ipArray() As String
+    Dim ipAddress As String
+    Dim hostname As String
+    Dim ipDict As Object
+    
+    ' Initialize
+    Set wsFirewall = ThisWorkbook.Sheets("Firewall Rules") ' The sheet with firewall rules
+    Set wsMapping = ThisWorkbook.Sheets("IP Mapping") ' The sheet with IP and Hostname mapping
+    Set ipDict = CreateObject("Scripting.Dictionary")
+    
+    ' Find the last rows in both sheets
+    lastRowFirewall = wsFirewall.Cells(wsFirewall.Rows.Count, "O").End(xlUp).Row
+    lastRowMapping = wsMapping.Cells(wsMapping.Rows.Count, 1).End(xlUp).Row
+    
+    ' Populate the dictionary with IP addresses and their corresponding hostnames
+    For i = 1 To lastRowMapping
+        ipAddress = Trim(wsMapping.Cells(i, 1).Value) ' Assuming IP addresses are in column A
+        hostname = Trim(wsMapping.Cells(i, 2).Value) ' Assuming Hostnames are in column B
+        If Len(ipAddress) > 0 And Len(hostname) > 0 Then
+            ipDict(ipAddress) = hostname
+        End If
+    Next i
+    
+    ' Loop through each row in the firewall rules sheet
+    For i = 1 To lastRowFirewall
+        ' Loop through columns O and K
+        For j = 11 To 15 Step 4
+            cellValue = wsFirewall.Cells(i, j).Value
+            
+            ' Split the cell value by semicolon
+            ipArray = Split(cellValue, ";")
+            
+            ' Loop through each item in the array
+            For k = LBound(ipArray) To UBound(ipArray)
+                ipAddress = Trim(ipArray(k))
+                If ipDict.Exists(ipAddress) Then
+                    ipArray(k) = ipDict(ipAddress) ' Replace IP with hostname
+                End If
+            Next k
+            
+            ' Join the array back into a semicolon-separated string and place it back in the cell
+            wsFirewall.Cells(i, j).Value = Join(ipArray, "; ")
+        Next j
+    Next i
+    
+    MsgBox "IP addresses have been replaced with hostnames.", vbInformation
+End Sub
+
+
+How to Use the Macro:
+Press ALT + F11 to open the VBA editor in Excel.
+Go to Insert > Module to create a new module.
+Copy and paste the above VBA code into the module.
+Close the VBA editor.
+Run the macro by pressing ALT + F8, selecting ReplaceIPWithHostname, and clicking Run.
+Explanation:
+wsFirewall refers to the sheet containing your firewall rules.
+wsMapping refers to the sheet that contains the IP addresses and their corresponding hostnames.
+The macro first creates a dictionary (key-value pairs) where each IP address from the mapping sheet is mapped to its corresponding hostname.
+It then loops through the firewall rules sheet, specifically columns O and K.
+If an IP address in the firewall rules matches one in the mapping sheet, it is replaced by the corresponding hostname.
+Multiple IPs in a single cell are handled by splitting and rejoining the values based on semicolons.
+Make sure to adjust the sheet names ("Firewall Rules" and "IP Mapping") to match the actual names of your sheets.
